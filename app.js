@@ -298,6 +298,30 @@ function checkout() {
     cartModal.hide();
 }
 
+function loadUserAvatar() {
+    const user = Telegram.WebApp.initDataUnsafe?.user;
+    if (!user) return;
+    
+    const avatarImg = document.getElementById('user-avatar');
+    const userName = document.getElementById('user-name');
+    
+    // Имя пользователя
+    userName.textContent = [user.first_name, user.last_name].filter(Boolean).join(' ');
+    
+    // Аватар через Bot API
+    fetch(`/get_avatar?user_id=${user.id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.photo_url) {
+                avatarImg.src = data.photo_url;
+                avatarImg.classList.remove('d-none');
+            }
+        });
+}
+
+// Вызовите при загрузке
+document.addEventListener('DOMContentLoaded', loadUserAvatar);
+
 // Вспомогательные функции
 function getCategoryName(category) {
     const categories = {
