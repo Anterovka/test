@@ -12,7 +12,7 @@ if (user) {
 const products = [
     {
         id: 1,
-        name: "Букет роз",
+        name: "пенис роз",
         price: 2500,
         category: "romantic",
         image: "https://via.placeholder.com/300x200?text=Букет+роз",
