@@ -252,6 +252,7 @@ function removeFromCart(index) {
     localStorage.setItem('cart', JSON.stringify(cart));
     updateCartCount();
     updateCartModal();
+    updateMainButtonVisibility();
 }
 
 // Оформление заказа
