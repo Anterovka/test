@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GiftMarket - Маркетплейс подарков</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка с поиском и корзиной -->
+        <header class="my-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h4 mb-0">🎁 GiftMarket</h1>
+                <div>
+                    <button id="cart-btn" class="btn btn-outline-primary position-relative">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
+                    </button>
+                    <button id="profile-btn" class="btn btn-outline-secondary ms-2">
+                        <i class="fas fa-user"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="input-group mt-3">
+                <input type="text" id="search-input" class="form-control" placeholder="Найти подарок...">
+                <button class="btn btn-primary" id="search-btn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <div class="d-flex flex-wrap mt-2">
+                <button class="btn btn-sm btn-outline-secondary me-2 mb-2 category-btn" data-category="all">Все</button>
+                <button class="btn btn-sm btn-outline-secondary me-2 mb-2 category-btn" data-category="romantic">Романтика</button>
+                <button class="btn btn-sm btn-outline-secondary me-2 mb-2 category-btn" data-category="birthday">День рождения</button>
+                <button class="btn btn-sm btn-outline-secondary me-2 mb-2 category-btn" data-category="children">Детям</button>
+                <button class="btn btn-sm btn-outline-secondary me-2 mb-2 category-btn" data-category="corporate">Корпоратив</button>
+            </div>
+        </header>
+
+        <!-- Основной контент -->
+        <main>
+            <div id="loading-spinner" class="text-center my-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+            </div>
+
+            <div id="products-container" class="row row-cols-1 row-cols-md-2 g-4"></div>
+
+            <div id="empty-message" class="text-center my-5 d-none">
+                <h5 class="text-muted">Ничего не найдено</h5>
+                <p>Попробуйте изменить параметры поиска</p>
+            </div>
+        </main>
+
+        <!-- Подвал -->
+        <footer class="mt-5 py-3 text-center text-muted small">
+            <p>© 2023 GiftMarket - Маркетплейс подарков</p>
+            <div class="d-flex justify-content-center">
+                <a href="#" class="text-muted me-3">Помощь</a>
+                <a href="#" class="text-muted me-3">О нас</a>
+                <a href="#" class="text-muted">Контакты</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Модальные окна -->
+    <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="productModalTitle">Название товара</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <img id="productModalImage" src="" class="img-fluid rounded mb-3" alt="">
+                    <p id="productModalDescription"></p>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span id="productModalPrice" class="h5 text-primary"></span>
+                        <div class="input-group" style="width: 120px;">
+                            <button class="btn btn-outline-secondary minus-btn" type="button">-</button>
+                            <input type="number" class="form-control text-center quantity-input" value="1" min="1">
+                            <button class="btn btn-outline-secondary plus-btn" type="button">+</button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="gift-message" class="form-label">Добавить поздравительное сообщение</label>
+                        <textarea class="form-control" id="gift-message" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Упаковка</label>
+                        <select class="form-select" id="gift-wrap">
+                            <option value="standard">Стандартная (бесплатно)</option>
+                            <option value="premium">Подарочная коробка (+300₽)</option>
+                            <option value="luxury">Премиум упаковка (+500₽)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-primary add-to-cart-btn">Добавить в корзину</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Корзина</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="cart-items-container"></div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <h5>Итого:</h5>
+                        <h5 id="cart-total">0₽</h5>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Продолжить покупки</button>
+                    <button type="button" class="btn btn-primary" id="checkout-btn">Оформить заказ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Мой профиль</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <img src="https://via.placeholder.com/100" class="rounded-circle" alt="Аватар">
+                        <h5 class="mt-2" id="user-name">Имя пользователя</h5>
+                    </div>
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Мои заказы
+                            <span class="badge bg-primary rounded-pill">0</span>
+                        </li>
+                        <li class="list-group-item">Избранное</li>
+                        <li class="list-group-item">Настройки</li>
+                        <li class="list-group-item">Помощь</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
