@@ -232,7 +232,8 @@ function addToCart(productId, quantity, message, wrap) {
             message,
             wrap
         });
-    }
+    updateMainButtonVisibility();
+}
     
     localStorage.setItem('cart', JSON.stringify(cart));
     updateCartCount();
@@ -393,3 +394,89 @@ function filterProductsByCategory(category) {
     const filtered = products.filter(product => product.category === category);
     renderProducts(filtered);
 }
+
+// Генерация ID заказа
+function generateOrderId() {
+    return Math.floor(Math.random() * 900000) + 100000;
+}
+
+// Отправка заказа в Telegram бот
+async function sendOrderToBot(orderData) {
+    try {
+        // Добавляем информацию о пользователе
+        orderData.user = {
+            id: tg.initDataUnsafe?.user?.id,
+            username: tg.initDataUnsafe?.user?.username,
+            firstName: tg.initDataUnsafe?.user?.first_name,
+            lastName: tg.initDataUnsafe?.user?.last_name
+        };
+        
+        // Добавляем ID заказа
+        orderData.orderId = generateOrderId();
+        
+        // Показываем индикатор загрузки
+        tg.MainButton.showProgress();
+        
+        // Отправляем данные в бот
+        tg.sendData(JSON.stringify(orderData));
+        
+        // Закрываем WebApp через 2 секунды
+        setTimeout(() => {
+            tg.close();
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Error sending order:', error);
+        tg.showAlert('Произошла ошибка при отправке заказа. Пожалуйста, попробуйте еще раз.');
+        tg.MainButton.hideProgress();
+    }
+}
+
+// Инициализация Telegram WebApp
+function initTelegramWebApp() {
+    // Развернуть на весь экран
+    tg.expand();
+    
+    // Настройка основной кнопки
+    tg.MainButton.setText("ОФОРМИТЬ ЗАКАЗ");
+    tg.MainButton.onClick(() => {
+        const orderData = {
+            items: cart.map(item => {
+                const product = products.find(p => p.id === item.productId);
+                return {
+                    productId: item.productId,
+                    name: product?.name || 'Неизвестный товар',
+                    quantity: item.quantity,
+                    price: product?.price || 0,
+                    message: item.message,
+                    wrap: item.wrap,
+                    wrapPrice: getWrapPrice(item.wrap)
+                };
+            }),
+            total: cart.reduce((sum, item) => {
+                const product = products.find(p => p.id === item.productId);
+                const wrapPrice = getWrapPrice(item.wrap);
+                return sum + (product ? (product.price + wrapPrice) * item.quantity : 0);
+            }, 0)
+        };
+        
+        sendOrderToBot(orderData);
+    });
+    
+    // Показать кнопку, когда корзина не пуста
+    if (cart.length > 0) {
+        tg.MainButton.show();
+    }
+}
+
+// Обновляем видимость основной кнопки при изменении корзины
+function updateMainButtonVisibility() {
+    if (cart.length > 0) {
+        tg.MainButton.show();
+    } else {
+        tg.MainButton.hide();
+    }
+}
+
+// Инициализируем при загрузке
+document.addEventListener('DOMContentLoaded', initTelegramWebApp);
